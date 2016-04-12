@@ -9,44 +9,48 @@ app.listen(3000, function() {
 
 app.get('/photo', function(req, res) {
     var takePhoto = new run_cmd(
-        'gphoto2', ['--set-config', 'shutterspeed=46', '--capture-image-and-download', '--force-overwrite'],
-        function(me, buffer) {
-            me.stdout += buffer.toString();
-        },
-        function() {
-            var result = takePhoto.stdout.replace('undefined', '');
-            resizePhoto(parsePathOfPhoto(result)[2], function(err, image) {
-                if (err) {
-                    console.error(err);
-                    res.send('error');
-                } else {
-            	    var imgSrc = 'data:' + Jimp.MIME_JPEG + ';base64,' + new Buffer(image, 'binary').toString('base64');
-                    res.send('<html><head></head><body><img style="width: 40%;" src="' + imgSrc + '" ></body></html>');
-                }
-            });
-        });
+        'gphoto2', 
+        ['--set-config', 'shutterspeed=46', '--capture-image-and-download', '--force-overwrite'],
+        commandOutputAppender,
+        cbRunCommandResizeAndManupulateTheImage);
 });
 
 app.get('/test', function(req, res) {
     var testCommand = new run_cmd(
-        'cat', ['mock'],
-        function(me, buffer) {
-            me.stdout += buffer.toString();
-        },
-        function() {
-            var result = testCommand.stdout.replace('undefined', '');
-            resizePhoto(parsePathOfPhoto(result)[2], function(err, image) {
-                if (err) {
-                    console.error(err);
-                    res.send('error');
-                } else {
-            	    var imgSrc = 'data:' + Jimp.MIME_JPEG + ';base64,' + new Buffer(image, 'binary').toString('base64');
-                    res.send('<html><head></head><body><img style="width: 40%;" src="' + imgSrc + '" ></body></html>');
-                }
-            });
-        });
-
+        'cat', 
+        ['mock'],
+        commandOutputAppender,
+        cbRunCommandResizeAndManupulateTheImage);
 });
+
+function commandOutputAppender(commander, buffer) {
+    commander.stdout += buffer.toString();
+}
+
+function cbRunCommandResizeAndManupulateTheImage() {
+    var result = takePhoto.stdout.replace('undefined', '');
+    resizePhoto(
+        parsePathOfPhoto(result)[2],
+        function(err, image) {
+            if (err) {
+                console.error(err);
+                res.send('error');
+            } else {
+                var imgSrc = 'data:' + Jimp.MIME_JPEG + ';base64,' + new Buffer(image, 'binary').toString('base64');
+                res.send('<html><head></head><body><img style="width: 40%;" src="' + imgSrc + '" ></body></html>');
+            }
+        });
+}
+
+function cbResizePhotoAddToHtml(err, image) {
+    if (err) {
+        console.error(err);
+        res.send('error');
+    } else {
+        var imgSrc = 'data:' + Jimp.MIME_JPEG + ';base64,' + new Buffer(image, 'binary').toString('base64');
+        res.send('<html><head></head><body><img style="width: 40%;" src="' + imgSrc + '" ></body></html>');
+    }
+}
 
 function resizePhoto(path, cb) {
     Jimp
