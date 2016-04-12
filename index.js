@@ -5,8 +5,8 @@ var express = require('express'),
 var app = express();
 
 var s3Options = {
-    accessKeyId: 'xxx',
-    secretAccessKey: 'yyy',
+    accessKeyId: 'AKIAIKFUSGFI4XC6JURQ',
+    secretAccessKey: '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',
     // region: 'US Standard',
     endpoint: 's3.amazonaws.com'
 };
@@ -44,11 +44,11 @@ function cbRunCommandResizeAndManupulateTheImage(res, commander) {
     resizePhoto(
         parsePathOfPhoto(result)[2],
         function(err, image) {
-            cbResizePhotoAddToHtml(res, err, image);
+            cbResizePhotoUploadAndDisplay(res, err, image);
         });
 }
 
-function addToHtml(image) {
+function addToHtml(res, image) {
     var imgSrc = 'data:' + Jimp.MIME_JPEG + ';base64,' + new Buffer(image, 'binary').toString('base64');
     res.send('<html><head></head><body><img style="width: 40%;" src="' + imgSrc + '" ></body></html>');
 }
@@ -66,21 +66,15 @@ function sendToS3(image) {
         if (err) console.log(err, err.stack); // an error occurred
         else console.log(data); // successful response
     });
-
-
-
-
-    var imgSrc = 'data:' + Jimp.MIME_JPEG + ';base64,' + new Buffer(image, 'binary').toString('base64');
-    res.send('<html><head></head><body><img style="width: 40%;" src="' + imgSrc + '" ></body></html>');
 }
 
-function cbResizePhotoAddToHtml(res, err, image) {
+function cbResizePhotoUploadAndDisplay(res, err, image) {
     if (err) {
         console.error(err);
         res.send('error');
     } else {
         sendToS3(image);
-        addToHtml(image);
+        addToHtml(res, image);
     }
 }
 
